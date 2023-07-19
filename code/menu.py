@@ -19,8 +19,29 @@ class Menu:
                 else:
                     self.menu_surfs[value['menu']].append((key,load(value['menu_surf'])))
                                             
+    def click(self, mouse_pos, mouse_button):
+        for sprite in self.buttons:
+            if sprite.rect.collidepoint(mouse_pos):
+                if mouse_button[1]: #middle mouse click
+                    if sprite.items['alt']:
+                        sprite.main_active = not sprite.main_active
+                if mouse_button[2]: # right click
+                    sprite.switch()
+                return sprite.get_id()     
     
+    def highlight_indicator(self, index):
+        if EDITOR_DATA[index]['menu'] == 'terrain':
+            pygame.draw.rect(self.display_surface, BUTTON_LINE_COLOR, self.tile_button_rect.inflate(4,4), 5,4)
+        if EDITOR_DATA[index]['menu'] == 'coin':
+            pygame.draw.rect(self.display_surface, BUTTON_LINE_COLOR, self.coin_button_rect.inflate(4,4), 5,4)
+        if EDITOR_DATA[index]['menu'] == 'enemy':
+            pygame.draw.rect(self.display_surface, BUTTON_LINE_COLOR, self.enemy_button_rect.inflate(4,4), 5,4)
+        if EDITOR_DATA[index]['menu'] in ('palm bg', 'palm fg'):
+            pygame.draw.rect(self.display_surface, BUTTON_LINE_COLOR, self.palm_button_rect.inflate(4,4), 5,4)
+
+             
     def create_buttons(self):
+    
 		
 		# menu area
         size = 180
@@ -43,16 +64,11 @@ class Menu:
         Button(self.enemy_button_rect, self.buttons, self.menu_surfs['enemy'])
         Button(self.palm_button_rect, self.buttons, self.menu_surfs['palm fg'], self.menu_surfs['palm bg'])
     
-    def display(self):
-        # pygame.draw.rect(self.display_surface, 'red', self.rect)
-        # pygame.draw.rect(self.display_surface, 'green', self.tile_button_rect)
-        # pygame.draw.rect(self.display_surface, 'blue', self.coin_button_rect)
-        # pygame.draw.rect(self.display_surface, 'yellow', self.palm_button_rect)
-        # pygame.draw.rect(self.display_surface, 'brown', self.enemy_button_rect)
-        
+    def display(self, index):
         self.buttons.update()
         self.buttons.draw(self.display_surface)
-
+        self.highlight_indicator(index)
+        
 class Button(pygame.sprite.Sprite):
     def __init__(self, rect, group, items, items_alt = None):
         super().__init__(group)
@@ -63,10 +79,18 @@ class Button(pygame.sprite.Sprite):
         self.items = {'main': items, 'alt': items_alt}
         self.index = 0
         self.main_active = True
+    
+    def get_id(self):
+        return self.items['main' if self.main_active else 'alt'][self.index][0]
+        
+    def switch(self):
+        self.index += 1
+        self.index = 0 if self.index >= len(self.items['main' if self.main_active else 'alt']) else self.index
    
     def update(self):
         self.image.fill(BUTTON_BG_COLOR)
-        surf = self.items['main'][self.index][1]
+        surf = self.items['main' if self.main_active else 'alt'][self.index][1]
         rect = surf.get_rect(center = (self.rect.width / 2, self.rect.height / 2))
         self.image.blit(surf, rect)
-        
+    
+  
